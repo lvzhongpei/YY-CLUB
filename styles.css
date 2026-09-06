@@ -1,38 +1,53 @@
 /* ═══════════════ YY CLUB · Apple 极简风 ═══════════════ */
 [hidden] { display: none !important; }
 
-/* ═══════════ 液态玻璃背景（Liquid Glass） ═══════════ */
+/* ═══════════ 液态玻璃背景（Liquid Glass · 无色玻璃） ═══════════ */
 .liquid-bg {
   position: fixed; inset: 0; z-index: -1; overflow: hidden;
-  background: var(--bg);
+  background: linear-gradient(180deg, #f8f9fb 0%, #eef0f4 55%, #f4f5f8 100%);
 }
-.liquid-bg .lb {
-  position: absolute; display: block;
-  border-radius: 50%;
-  filter: blur(72px);
+/* 柔和明暗云：仅明度变化，无彩色 */
+.liquid-bg .wash {
+  position: absolute; display: block; border-radius: 50%;
+  filter: blur(90px);
   will-change: transform, border-radius;
-  animation: lb-morph 28s ease-in-out infinite;
+  animation: lb-morph 34s ease-in-out infinite;
 }
-.lb1 {
-  width: 62vmax; height: 62vmax; left: -18vmax; top: -20vmax;
-  background: hsl(224 88% 60% / .34);
-  animation-duration: 30s;
+.w1 {
+  width: 66vmax; height: 66vmax; left: -20vmax; top: -24vmax;
+  background: rgba(255,255,255,.95);
+  animation-duration: 36s;
 }
-.lb2 {
-  width: 55vmax; height: 55vmax; right: -16vmax; top: -8vmax;
-  background: hsl(262 85% 66% / .30);
-  animation-duration: 24s; animation-delay: -8s;
+.w2 {
+  width: 58vmax; height: 58vmax; right: -18vmax; bottom: -26vmax;
+  background: rgba(205,212,222,.55);
+  animation-duration: 30s; animation-delay: -12s;
 }
-.lb3 {
-  width: 48vmax; height: 48vmax; left: 8vmax; bottom: -22vmax;
-  background: hsl(190 85% 58% / .28);
-  animation-duration: 34s; animation-delay: -16s;
+/* 玻璃透镜浮层：折射后方内容 + 边缘高光 */
+.liquid-bg .orb {
+  position: absolute; display: block; border-radius: 50%;
+  background: rgba(255,255,255,.14);
+  backdrop-filter: blur(3px) saturate(130%) brightness(1.06);
+  -webkit-backdrop-filter: blur(3px) saturate(130%) brightness(1.06);
+  border: 1px solid rgba(255,255,255,.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.65),
+    inset 0 -14px 30px rgba(120,130,145,.10),
+    0 24px 60px rgba(100,110,125,.10);
+  will-change: transform, border-radius;
+  animation: lb-morph 24s ease-in-out infinite;
 }
-.lb4 {
-  width: 40vmax; height: 40vmax; right: 2vmax; bottom: -12vmax;
-  background: hsl(335 80% 66% / .20);
-  animation-duration: 26s; animation-delay: -4s;
+.orb::after {  /* 镜面高光弧 */
+  content: ""; position: absolute; left: 12%; top: 8%;
+  width: 46%; height: 30%;
+  background: radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.85), transparent 70%);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+  filter: blur(2px);
 }
+.o1 { width: 30vmax; height: 30vmax; left: 6vmax; top: 12vmax; animation-duration: 22s; }
+.o2 { width: 22vmax; height: 22vmax; right: 10vmax; top: 26vmax; animation-duration: 26s; animation-delay: -9s; }
+.o3 { width: 16vmax; height: 16vmax; left: 38vmax; bottom: 6vmax; animation-duration: 20s; animation-delay: -5s; }
 @keyframes lb-morph {
   0%, 100% { border-radius: 42% 58% 61% 39% / 45% 43% 57% 55%; }
   33%      { border-radius: 60% 40% 38% 62% / 55% 62% 38% 45%; }
@@ -42,15 +57,23 @@
 .liquid-sheen {
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background: radial-gradient(560px circle at var(--sx, 70%) var(--sy, 20%),
-              rgba(255,255,255,.38), transparent 62%);
+              rgba(255,255,255,.5), transparent 62%);
   mix-blend-mode: soft-light;
 }
 @media (prefers-color-scheme: dark) {
-  .lb1 { background: hsl(224 85% 52% / .30); }
-  .lb2 { background: hsl(262 80% 56% / .26); }
-  .lb3 { background: hsl(190 80% 46% / .24); }
-  .lb4 { background: hsl(335 75% 52% / .18); }
-  .liquid-sheen { background: radial-gradient(560px circle at var(--sx, 70%) var(--sy, 20%), rgba(255,255,255,.14), transparent 62%); }
+  .liquid-bg { background: linear-gradient(180deg, #070708 0%, #0d0e11 55%, #08090b 100%); }
+  .w1 { background: rgba(255,255,255,.07); }
+  .w2 { background: rgba(255,255,255,.05); }
+  .liquid-bg .orb {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.14);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.22),
+      inset 0 -14px 30px rgba(0,0,0,.25),
+      0 24px 60px rgba(0,0,0,.35);
+  }
+  .orb::after { background: radial-gradient(ellipse at 40% 40%, rgba(255,255,255,.28), transparent 70%); }
+  .liquid-sheen { background: radial-gradient(560px circle at var(--sx, 70%) var(--sy, 20%), rgba(255,255,255,.12), transparent 62%); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lb { animation: none !important; }
@@ -210,6 +233,13 @@ svg { display: block; }
 @media (min-width: 720px) {
   .mini-player { left: 50%; transform: translateX(-50%); width: 640px; right: auto; }
   @keyframes miniIn { from { transform: translate(-50%, 90px); opacity: 0; } }
+}
+.mini-player::before {  /* 玻璃镜面斜向高光 */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.30) 47%, transparent 56%);
+}
+@media (prefers-color-scheme: dark) {
+  .mini-player::before { background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.10) 47%, transparent 56%); }
 }
 .mini-progress { position: absolute; top: 0; left: 12px; right: 12px; height: 2.5px; border-radius: 2px; background: var(--hairline); overflow: hidden; }
 .mini-progress i { display: block; height: 100%; width: 0; background: var(--player-tint); border-radius: 2px; transition: width .25s linear; }

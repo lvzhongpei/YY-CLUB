@@ -390,13 +390,19 @@ function bind() {
   if (!blobs.length) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const sheen = document.querySelector(".liquid-sheen");
-  const cfg = [
-    { fx: 0.055, fy: 0.045, ax: 26, ay: 20, s: 0.00022 },
-    { fx: -0.040, fy: 0.060, ax: 34, ay: 26, s: 0.00017 },
-    { fx: 0.070, fy: -0.050, ax: 22, ay: 30, s: 0.00026 },
-    { fx: -0.060, fy: -0.070, ax: 30, ay: 18, s: 0.00020 },
+  // 透镜浮层（前景，移动多）与明暗云（背景，移动少）两套参数
+  const orbCfg = [
+    { fx: 0.075, fy: 0.060, ax: 30, ay: 22, s: 0.00024 },
+    { fx: -0.060, fy: 0.080, ax: 38, ay: 28, s: 0.00019 },
+    { fx: 0.090, fy: -0.070, ax: 26, ay: 34, s: 0.00028 },
   ];
-  const cur = cfg.map(() => ({ x: 0, y: 0 }));
+  const washCfg = [
+    { fx: 0.022, fy: 0.018, ax: 40, ay: 30, s: 0.00012 },
+    { fx: -0.018, fy: 0.025, ax: 48, ay: 36, s: 0.00010 },
+  ];
+  const pick = (b, i) => b.classList.contains("orb") ? orbCfg[i % orbCfg.length] : washCfg[i % washCfg.length];
+  const cfgs = blobs.map(pick);
+  const cur = blobs.map(() => ({ x: 0, y: 0 }));
   let mx = innerWidth / 2, my = innerHeight / 2;
   let sx = innerWidth * 0.7, sy = innerHeight * 0.2;
   addEventListener("pointermove", (e) => {
@@ -406,7 +412,7 @@ function bind() {
   function tick(t) {
     const cx = innerWidth / 2, cy = innerHeight / 2;
     blobs.forEach((b, i) => {
-      const c = cfg[i % cfg.length], p = cur[i];
+      const c = cfgs[i], p = cur[i];
       const tx = (mx - cx) * c.fx + Math.sin(t * c.s + i * 2.1) * c.ax;
       const ty = (my - cy) * c.fy + Math.cos(t * c.s * 1.3 + i * 1.7) * c.ay;
       p.x += (tx - p.x) * 0.045;
