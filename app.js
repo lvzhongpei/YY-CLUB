@@ -3,16 +3,15 @@
 
 /* ---------- 全局状态 ---------- */
 const S = {
-  eps: [],            // 单集数据
-  cur: -1,            // 当前单集索引（按原始顺序）
-  order: [],          // 当前展示顺序
-  desc: true,         // 最新优先
+  eps: [],
+  cur: -1,
+  order: [],
+  desc: true,
   query: "",
   rate: 1,
-  cues: [],           // 当前字幕
-  activeCue: -2,
   userScrubbing: false,
-  transcriptLoadedFor: -1,
+  specC1: "#6366f1",
+  specC2: "#a855f7",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -38,23 +37,21 @@ function ensureGraph() {
   freqData = new Uint8Array(analyser.frequencyBinCount);
 }
 
-/* 频谱条带平滑值 */
 const BAR_N = 48;
 const bars = new Float32Array(BAR_N);
 
 function sampleBars() {
   if (!analyser) { bars.fill(0); return; }
   analyser.getByteFrequencyData(freqData);
-  const usable = Math.floor(freqData.length * 0.72); // 高频尾部能量低，截掉
+  const usable = Math.floor(freqData.length * 0.72);
   for (let i = 0; i < BAR_N; i++) {
-    // 对数分布，低音部细节更多
     const t0 = Math.pow(i / BAR_N, 1.7) * usable;
     const t1 = Math.pow((i + 1) / BAR_N, 1.7) * usable;
     let sum = 0, n = 0;
     for (let j = Math.floor(t0); j < Math.max(Math.floor(t1), Math.floor(t0) + 1); j++) { sum += freqData[j]; n++; }
     const v = n ? sum / n / 255 : 0;
     const shaped = Math.pow(v, 1.25);
-    bars[i] += (shaped - bars[i]) * (shaped > bars[i] ? 0.55 : 0.16); // 快攻慢放
+    bars[i] += (shaped - bars[i]) * (shaped > bars[i] ? 0.55 : 0.16);
   }
 }
 
@@ -69,10 +66,12 @@ function fmt(sec) {
 function gradFor(i) {
   const h1 = (i * 137.508) % 360;
   const h2 = (h1 + 42) % 360;
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
   return {
     css: `linear-gradient(135deg, hsl(${h1} 62% 52%), hsl(${h2} 68% 42%))`,
-    accent: `hsl(${h1} 72% ${matchMedia("(prefers-color-scheme: dark)").matches ? 62 : 46}%)`,
-    hue: h1,
+    accent: `hsl(${h1} 72% ${dark ? 62 : 46}%)`,
+    c1: `hsl(${h1} 78% ${dark ? 66 : 56}%)`,
+    c2: `hsl(${h2} 74% ${dark ? 56 : 44}%)`,
   };
 }
 
@@ -95,7 +94,7 @@ function renderList() {
       <span class="ep-art" style="background:${g.css}">${e.num}</span>
       <span class="ep-info">
         <span class="ep-title">${e.title}${isCur ? '<span class="now-badge">正在播放</span>' : ""}</span>
-        <span class="ep-meta">YY CLUB<span class="dot"></span>${fmt(e.dur)}${e.hasSub ? '<span class="dot"></span>含字幕' : ""}</span>
+        <span class="ep-meta">YY CLUB<span class="dot"></span>${fmt(e.dur)}</span>
         ${pct > 1 && pct < 99 ? `<span class="ep-progress-track"><i style="width:${pct}%"></i></span>` : ""}
       </span>
       <span class="ep-play-btn">
@@ -129,15 +128,13 @@ function loadEpisode(i, autoplay = true, restorePos = true) {
   const e = S.eps[i];
   const g = gradFor(e.num);
   document.documentElement.style.setProperty("--player-tint", g.accent);
+  S.specC1 = g.c1; S.specC2 = g.c2; specGrad = null;
 
   if (!sameAsCur) {
     audio.src = e.src;
     audio.playbackRate = S.rate;
-    S.cues = []; S.activeCue = -2; S.transcriptLoadedFor = -1;
-    renderTranscript();
   }
 
-  // 更新各视图
   $("miniTitle").textContent = e.title;
   $("miniSub").textContent = `YY CLUB · ${fmt(e.dur)}`;
   $("miniArt").style.background = g.css;
@@ -148,8 +145,17 @@ function loadEpisode(i, autoplay = true, restorePos = true) {
   $("fpArt").innerHTML = `<span class="art-num">${pad2(e.num)}</span><span class="art-label">YY CLUB</span>`;
   $("fpBg").style.background = g.css;
   $("aboutText").textContent = `YY CLUB 电台第 ${e.num} 期节目。戴上耳机，沉浸收听。`;
-  $("aboutMeta").textContent = `时长 ${fmt(e.dur)} · AAC 高品质音质${e.hasSub ? " · AI 字幕已上线" : ""}`;
+  $("aboutMeta").textContent = `时长 ${fmt(e.dur)} · AAC 高品质音质`;
   $("miniPlayer").hidden = false;
+
+  // 迷你 EQ 渐变着色（跨 4 根条的整体渐变）
+  const eqBars = $("miniEq").children;
+  const eqW = 20, gap = 2.5, bw = (eqW - gap * (eqBars.length - 1)) / eqBars.length;
+  for (let k = 0; k < eqBars.length; k++) {
+    eqBars[k].style.backgroundImage = `linear-gradient(90deg, ${g.c1}, ${g.c2})`;
+    eqBars[k].style.backgroundSize = `${eqW}px 100%`;
+    eqBars[k].style.backgroundPositionX = `-${(k * (bw + gap)).toFixed(2)}px`;
+  }
 
   const resume = restorePos ? getPos(e.id) : 0;
   const start = () => {
@@ -160,11 +166,19 @@ function loadEpisode(i, autoplay = true, restorePos = true) {
   if (audio.readyState >= 1) start();
   else audio.addEventListener("loadedmetadata", start, { once: true });
 
-  loadTranscript(i);
   renderList();
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: e.title, artist: "YY CLUB", album: "YY CLUB 播客" });
   }
+}
+
+/* ---------- 切换单集 ---------- */
+function stepEpisode(d) {
+  if (!S.order.length) return;
+  let pos = S.order.indexOf(S.cur);
+  if (pos < 0) pos = 0;
+  const n = (pos + d + S.order.length) % S.order.length;
+  loadEpisode(S.order[n], true, false);
 }
 
 /* ---------- 播放控制 ---------- */
@@ -206,84 +220,9 @@ function updateTimes() {
   $("miniProgress").firstElementChild.style.width = d ? (c / d * 100) + "%" : "0";
 }
 
-/* ---------- 字幕 ---------- */
-function parseVTT(text) {
-  const cues = [];
-  const blocks = text.replace(/\r/g, "").split("\n\n");
-  for (const b of blocks) {
-    const lines = b.trim().split("\n").filter(l => l.trim());
-    if (!lines.length || lines[0].startsWith("WEBVTT") || lines[0].startsWith("NOTE")) continue;
-    let tIdx = lines.findIndex(l => l.includes("-->"));
-    if (tIdx < 0) continue;
-    const m = lines[tIdx].match(/(\d+):(\d+):(\d+)[.,](\d+)\s*-->\s*(\d+):(\d+):(\d+)[.,](\d+)/);
-    if (!m) continue;
-    const start = +m[1] * 3600 + +m[2] * 60 + +m[3] + (+m[4]) / 1000;
-    const end = +m[5] * 3600 + +m[6] * 60 + +m[7] + (+m[8]) / 1000;
-    const text2 = lines.slice(tIdx + 1).join(" ").trim();
-    if (text2) cues.push({ start, end, text: text2 });
-  }
-  return cues;
-}
-
-async function loadTranscript(i) {
-  if (S.transcriptLoadedFor === i) return;
-  S.transcriptLoadedFor = i;
-  const e = S.eps[i];
-  try {
-    const r = await fetch(e.sub, { cache: "no-cache" });
-    if (!r.ok) throw 0;
-    S.cues = parseVTT(await r.text());
-    if (!S.cues.length) throw 0;
-    e.hasSub = true;
-  } catch {
-    S.cues = [];
-    e.hasSub = false;
-  }
-  S.activeCue = -2;
-  renderTranscript();
-  renderList();
-}
-
-function renderTranscript() {
-  const list = $("transcriptList"), empty = $("transcriptEmpty");
-  if (!S.cues.length) {
-    list.innerHTML = "";
-    empty.hidden = false;
-    return;
-  }
-  empty.hidden = true;
-  list.innerHTML = S.cues.map((c, i) =>
-    `<button class="ts-line" data-c="${i}"><span class="ts-time">${fmt(c.start)}</span>${c.text}</button>`
-  ).join("");
-}
-
-function syncTranscript() {
-  if (!S.cues.length || $("panelTranscript").hidden) return;
-  const t = audio.currentTime;
-  // 二分查找当前句
-  let lo = 0, hi = S.cues.length - 1, hit = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (t < S.cues[mid].start) hi = mid - 1;
-    else if (t > S.cues[mid].end) lo = mid + 1;
-    else { hit = mid; break; }
-  }
-  if (hit === -1) hit = t < S.cues[0].start ? -1 : Math.min(lo, S.cues.length - 1);
-  if (hit === S.activeCue) return;
-  S.activeCue = hit;
-  document.querySelectorAll(".ts-line.active").forEach(n => n.classList.remove("active"));
-  if (hit >= 0) {
-    const el = document.querySelector(`.ts-line[data-c="${hit}"]`);
-    if (el) {
-      el.classList.add("active");
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
-  }
-}
-
-/* ---------- 频谱渲染循环 ---------- */
+/* ---------- 频谱渲染循环（渐变色） ---------- */
 const canvas = $("fpSpectrum"), c2d = canvas.getContext("2d");
-let rafId = null;
+let rafId = null, specGrad = null, specGradW = 0;
 
 function drawSpectrum() {
   sampleBars();
@@ -291,21 +230,27 @@ function drawSpectrum() {
   const W = canvas.clientWidth * dpr, H = canvas.clientHeight * dpr;
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
   c2d.clearRect(0, 0, W, H);
+
+  if (!specGrad || specGradW !== W) {
+    specGrad = c2d.createLinearGradient(0, 0, W, 0);
+    specGrad.addColorStop(0, S.specC1);
+    specGrad.addColorStop(1, S.specC2);
+    specGradW = W;
+  }
+  c2d.fillStyle = specGrad;
+
   const gap = W * 0.006, bw = (W - gap * (BAR_N - 1)) / BAR_N;
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--player-tint").trim() || "#6366f1";
-  c2d.fillStyle = accent;
   const idle = audio.paused;
   for (let i = 0; i < BAR_N; i++) {
     const h = Math.max(H * 0.045, bars[i] * H * 0.96);
     const x = i * (bw + gap), y = (H - h) / 2;
-    c2d.globalAlpha = idle ? 0.28 : 0.95;
+    c2d.globalAlpha = idle ? 0.4 : 0.95;
     c2d.beginPath();
     c2d.roundRect(x, y, bw, h, bw / 2);
     c2d.fill();
   }
   c2d.globalAlpha = 1;
 
-  // 迷你条
   const eq = $("miniEq").children;
   for (let k = 0; k < eq.length; k++) {
     const v = idle ? 0.12 : Math.max(0.12, bars[Math.floor(k * BAR_N / eq.length / 2) * 2]);
@@ -324,6 +269,7 @@ function openFull() {
 }
 function closeFull() {
   const fp = $("fullPlayer");
+  if (fp.hidden) return;
   fp.classList.add("closing");
   setTimeout(() => { fp.hidden = true; fp.classList.remove("closing"); }, 290);
   document.body.style.overflow = "";
@@ -355,12 +301,14 @@ function bind() {
   $("miniFwd").addEventListener("click", () => seekBy(30));
   $("miniInfo").addEventListener("click", openFull);
   $("miniArt").addEventListener("click", openFull);
-  $("fpClose").addEventListener("click", closeFull);
+  $("fpCollapse").addEventListener("click", closeFull);
   $("fpHandleArea").addEventListener("click", closeFull);
 
   $("btnPlay").addEventListener("click", togglePlay);
   $("btnBack").addEventListener("click", () => seekBy(-15));
   $("btnFwd").addEventListener("click", () => seekBy(30));
+  $("btnPrev").addEventListener("click", () => stepEpisode(-1));
+  $("btnNext").addEventListener("click", () => stepEpisode(1));
 
   const scr = $("scrubber");
   scr.addEventListener("input", () => {
@@ -380,26 +328,29 @@ function bind() {
     else audio.volume = v;
   });
 
-  const RATES = [1, 1.25, 1.5, 2, 0.8];
-  $("rateBtn").addEventListener("click", () => {
-    S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
-    audio.playbackRate = S.rate;
-    $("rateBtn").textContent = (S.rate === 0.8 ? "0.8" : S.rate) + "×";
+  /* 倍速菜单 */
+  const rateBtn = $("rateBtn"), rateMenu = $("rateMenu");
+  rateBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = rateMenu.hidden;
+    rateMenu.hidden = !willOpen;
+    rateBtn.setAttribute("aria-expanded", String(willOpen));
   });
-
-  document.querySelectorAll(".fp-tab").forEach(t => t.addEventListener("click", () => {
-    document.querySelectorAll(".fp-tab").forEach(x => x.classList.toggle("active", x === t));
-    const isTs = t.dataset.tab === "transcript";
-    $("panelAbout").hidden = isTs;
-    $("panelTranscript").hidden = !isTs;
-    if (isTs) { S.activeCue = -2; syncTranscript(); }
-  }));
-
-  $("transcriptList").addEventListener("click", (ev) => {
-    const line = ev.target.closest(".ts-line");
-    if (!line) return;
-    const c = S.cues[+line.dataset.c];
-    if (c) { audio.currentTime = c.start + 0.01; play(); }
+  rateMenu.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-rate]");
+    if (!b) return;
+    S.rate = parseFloat(b.dataset.rate);
+    audio.playbackRate = S.rate;
+    $("rateLabel").textContent = b.dataset.rate.replace(/\.?0+$/, "") + "×";
+    rateMenu.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+    rateMenu.hidden = true;
+    rateBtn.setAttribute("aria-expanded", "false");
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".rate-wrap")) {
+      rateMenu.hidden = true;
+      rateBtn.setAttribute("aria-expanded", "false");
+    }
   });
 
   audio.addEventListener("play", () => { ensureGraph(); syncPlayIcons(); });
@@ -409,9 +360,8 @@ function bind() {
     const pos = S.order.indexOf(S.cur);
     if (pos >= 0 && pos + 1 < S.order.length) loadEpisode(S.order[pos + 1], true, false);
   });
-  audio.addEventListener("timeupdate", () => { updateTimes(); syncTranscript(); });
+  audio.addEventListener("timeupdate", updateTimes);
 
-  // 键盘
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" && e.target.type === "search") return;
     if (e.code === "Space") { e.preventDefault(); togglePlay(); }
@@ -423,10 +373,9 @@ function bind() {
   setInterval(savePos, 5000);
   addEventListener("pagehide", savePos);
 
-  // Media Session
   if ("mediaSession" in navigator) {
-    navigator.mediaSession.setActionHandler("previoustrack", () => seekBy(-15));
-    navigator.mediaSession.setActionHandler("nexttrack", () => seekBy(30));
+    navigator.mediaSession.setActionHandler("previoustrack", () => stepEpisode(-1));
+    navigator.mediaSession.setActionHandler("nexttrack", () => stepEpisode(1));
   }
 }
 
@@ -443,9 +392,8 @@ function bind() {
   $("brandSub").textContent = `播客电台 · ${S.eps.length} 期节目`;
   bind();
   renderList();
-  loop(); // 频谱渲染循环常驻（无音频时显示静态底条）
+  loop();
 
-  // 恢复上次收听
   const d = store.read();
   if (d.last) {
     const i = S.eps.findIndex(e => e.id === d.last);

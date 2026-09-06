@@ -88,8 +88,11 @@
       </div>
     </div>
 
-    <!-- 控制 -->
+    <!-- 控制：上一期 / -15s / 播放 / +30s / 下一期 -->
     <div class="fp-controls">
+      <button class="ctl-btn ctl-nav" id="btnPrev" aria-label="上一期">
+        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="2.4" height="14" rx="1.2"/><path d="M19 6.2v11.6c0 .9-1 1.4-1.7.9l-9-5.8c-.7-.4-.7-1.4 0-1.8l9-5.8c.7-.5 1.7 0 1.7.9z"/></svg>
+      </button>
       <button class="ctl-btn" id="btnBack" aria-label="后退 15 秒">
         <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" transform="scale(-1,1) translate(-24,0)"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>
       </button>
@@ -100,37 +103,46 @@
       <button class="ctl-btn" id="btnFwd" aria-label="快进 30 秒">
         <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">30</text></svg>
       </button>
+      <button class="ctl-btn ctl-nav" id="btnNext" aria-label="下一期">
+        <svg viewBox="0 0 24 24"><rect x="16.6" y="5" width="2.4" height="14" rx="1.2"/><path d="M5 6.2v11.6c0 .9 1 1.4 1.7.9l9-5.8c.7-.4.7-1.4 0-1.8l-9-5.8c-.7-.5-1.7 0-1.7.9z"/></svg>
+      </button>
     </div>
 
-    <!-- 音量 / 速度 -->
+    <!-- 音量 / 倍速 -->
     <div class="fp-extras">
       <div class="fp-volume" id="fpVolume">
         <svg viewBox="0 0 24 24" class="vol-icon"><path d="M4 9v6h4l5 4V5L8 9H4z"/></svg>
         <input type="range" id="volume" min="0" max="100" value="100" aria-label="音量">
         <svg viewBox="0 0 24 24" class="vol-icon"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </div>
-      <button class="rate-btn" id="rateBtn">1×</button>
+      <div class="rate-wrap">
+        <button class="rate-btn" id="rateBtn" aria-haspopup="true" aria-expanded="false">
+          <span id="rateLabel">1×</span>
+          <svg viewBox="0 0 12 12" class="rate-caret"><path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="rate-menu" id="rateMenu" hidden>
+          <div class="rate-menu-title">播放速度</div>
+          <button data-rate="0.5"><span>0.5×</span><i class="tick"></i></button>
+          <button data-rate="0.75"><span>0.75×</span><i class="tick"></i></button>
+          <button data-rate="1" class="active"><span>1×</span><i class="tick"></i></button>
+          <button data-rate="1.25"><span>1.25×</span><i class="tick"></i></button>
+          <button data-rate="1.5"><span>1.5×</span><i class="tick"></i></button>
+          <button data-rate="2"><span>2×</span><i class="tick"></i></button>
+        </div>
+      </div>
     </div>
 
-    <!-- 标签页 -->
-    <div class="fp-tabs">
-      <button class="fp-tab active" data-tab="about">简介</button>
-      <button class="fp-tab" data-tab="transcript">字幕</button>
-    </div>
-    <div class="fp-panel" id="panelAbout">
+    <!-- 简介 -->
+    <div class="fp-about">
+      <div class="fp-about-label">节目简介</div>
       <p id="aboutText"></p>
       <p class="about-meta" id="aboutMeta"></p>
     </div>
-    <div class="fp-panel" id="panelTranscript" hidden>
-      <div class="transcript-list" id="transcriptList"></div>
-      <div class="transcript-empty" id="transcriptEmpty" hidden>
-        <div class="ts-spinner"></div>
-        <p>本期字幕正在由 AI 生成<br><span>稍后刷新页面即可查看</span></p>
-      </div>
-    </div>
   </div>
-  <button class="fp-close" id="fpClose" aria-label="关闭播放器">
-    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+
+  <!-- 收起到迷你播放条 -->
+  <button class="fp-collapse" id="fpCollapse" aria-label="收起播放器">
+    <svg viewBox="0 0 24 24"><path d="M5.5 9.5 12 16l6.5-6.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 </div>
 
