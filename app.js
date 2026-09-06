@@ -17,11 +17,16 @@ const S = {
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
 
+/* 移动端直连播放：Web Audio 会在锁屏/后台时被系统挂起导致停播，
+   故手机/平板不走频谱图，直接 <audio> 输出以保证锁屏持续播放 */
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 /* ---------- Web Audio 频谱 ---------- */
 let actx = null, analyser = null, srcNode = null, gainNode = null;
 let freqData = null;
 
 function ensureGraph() {
+  if (isMobile) return;
   if (actx) { if (actx.state === "suspended") actx.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   actx = new AC();
@@ -298,7 +303,7 @@ function bind() {
   });
 
   $("miniPlay").addEventListener("click", togglePlay);
-  $("miniFwd").addEventListener("click", () => seekBy(30));
+  $("miniFwd").addEventListener("click", () => seekBy(15));
   $("miniInfo").addEventListener("click", openFull);
   $("miniArt").addEventListener("click", openFull);
   $("fpCollapse").addEventListener("click", closeFull);
@@ -306,7 +311,7 @@ function bind() {
 
   $("btnPlay").addEventListener("click", togglePlay);
   $("btnBack").addEventListener("click", () => seekBy(-15));
-  $("btnFwd").addEventListener("click", () => seekBy(30));
+  $("btnFwd").addEventListener("click", () => seekBy(15));
   $("btnPrev").addEventListener("click", () => stepEpisode(-1));
   $("btnNext").addEventListener("click", () => stepEpisode(1));
 

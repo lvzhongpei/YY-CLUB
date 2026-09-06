@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%23a855f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Ctext x='50' y='66' font-size='44' font-family='-apple-system,Helvetica' font-weight='700' fill='white' text-anchor='middle'%3EY%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="styles.css?v=20260906c">
+<link rel="stylesheet" href="styles.css?v=20260906d">
 </head>
 <body>
 
@@ -56,8 +56,8 @@
     <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5.5v13c0 .8.9 1.3 1.6.9l10-6.5c.6-.4.6-1.4 0-1.8l-10-6.5c-.7-.4-1.6.1-1.6.9z"/></svg>
     <svg class="icon-pause" viewBox="0 0 24 24" style="display:none"><rect x="6.5" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.2"/></svg>
   </button>
-  <button class="mini-btn mini-fwd" id="miniFwd" aria-label="快进 30 秒">
-    <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">30</text></svg>
+  <button class="mini-btn mini-fwd" id="miniFwd" aria-label="快进 15 秒">
+    <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" transform="scale(-1,1) translate(-24,0)"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>
   </button>
 </div>
 
@@ -89,20 +89,20 @@
       </div>
     </div>
 
-    <!-- 控制：上一期 / -15s / 播放 / +30s / 下一期 -->
+    <!-- 控制：上一期 / -15s / 播放 / +15s / 下一期 -->
     <div class="fp-controls">
       <button class="ctl-btn ctl-nav" id="btnPrev" aria-label="上一期">
         <svg viewBox="0 0 24 24"><rect x="5" y="5" width="2.4" height="14" rx="1.2"/><path d="M19 6.2v11.6c0 .9-1 1.4-1.7.9l-9-5.8c-.7-.4-.7-1.4 0-1.8l9-5.8c.7-.5 1.7 0 1.7.9z"/></svg>
       </button>
       <button class="ctl-btn" id="btnBack" aria-label="后退 15 秒">
-        <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" transform="scale(-1,1) translate(-24,0)"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>
       </button>
       <button class="ctl-btn ctl-play" id="btnPlay" aria-label="播放或暂停">
         <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5.5v13c0 .8.9 1.3 1.6.9l10-6.5c.6-.4.6-1.4 0-1.8l-10-6.5c-.7-.4-1.6.1-1.6.9z"/></svg>
         <svg class="icon-pause" viewBox="0 0 24 24" style="display:none"><rect x="6.5" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.2"/></svg>
       </button>
-      <button class="ctl-btn" id="btnFwd" aria-label="快进 30 秒">
-        <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">30</text></svg>
+      <button class="ctl-btn" id="btnFwd" aria-label="快进 15 秒">
+        <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" transform="scale(-1,1) translate(-24,0)"/><text x="12" y="15.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>
       </button>
       <button class="ctl-btn ctl-nav" id="btnNext" aria-label="下一期">
         <svg viewBox="0 0 24 24"><rect x="16.6" y="5" width="2.4" height="14" rx="1.2"/><path d="M5 6.2v11.6c0 .9 1 1.4 1.7.9l9-5.8c.7-.4.7-1.4 0-1.8l-9-5.8c-.7-.5-1.7 0-1.7.9z"/></svg>
@@ -148,6 +148,6 @@
 </div>
 
 <audio id="audio" preload="none"></audio>
-<script src="app.js?v=20260906c"></script>
+<script src="app.js?v=20260906d"></script>
 </body>
 </html>
