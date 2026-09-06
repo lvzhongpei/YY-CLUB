@@ -384,6 +384,44 @@ function bind() {
   }
 }
 
+/* ---------- 液态玻璃：鼠标律动 ---------- */
+(function liquidGlass() {
+  const blobs = [...document.querySelectorAll(".lb")];
+  if (!blobs.length) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const sheen = document.querySelector(".liquid-sheen");
+  const cfg = [
+    { fx: 0.055, fy: 0.045, ax: 26, ay: 20, s: 0.00022 },
+    { fx: -0.040, fy: 0.060, ax: 34, ay: 26, s: 0.00017 },
+    { fx: 0.070, fy: -0.050, ax: 22, ay: 30, s: 0.00026 },
+    { fx: -0.060, fy: -0.070, ax: 30, ay: 18, s: 0.00020 },
+  ];
+  const cur = cfg.map(() => ({ x: 0, y: 0 }));
+  let mx = innerWidth / 2, my = innerHeight / 2;
+  let sx = innerWidth * 0.7, sy = innerHeight * 0.2;
+  addEventListener("pointermove", (e) => {
+    mx = e.clientX; my = e.clientY;
+    sx = e.clientX; sy = e.clientY;
+  }, { passive: true });
+  function tick(t) {
+    const cx = innerWidth / 2, cy = innerHeight / 2;
+    blobs.forEach((b, i) => {
+      const c = cfg[i % cfg.length], p = cur[i];
+      const tx = (mx - cx) * c.fx + Math.sin(t * c.s + i * 2.1) * c.ax;
+      const ty = (my - cy) * c.fy + Math.cos(t * c.s * 1.3 + i * 1.7) * c.ay;
+      p.x += (tx - p.x) * 0.045;
+      p.y += (ty - p.y) * 0.045;
+      b.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0)`;
+    });
+    if (sheen) {
+      sheen.style.setProperty("--sx", sx + "px");
+      sheen.style.setProperty("--sy", sy + "px");
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
 /* ---------- 启动 ---------- */
 (async function init() {
   try {
